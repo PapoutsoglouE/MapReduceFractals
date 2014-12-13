@@ -81,21 +81,18 @@ public class CombineInReduce extends Configured implements Tool {
     	  colShift = 13;
     	  pixelOutput = line[0];
     	  
-    	  
-
-    	  //System.out.println("string0: " + line [0] + " string1: " + line[1]);
+    	  // Isolate frame number as integer:
     	  frame = Integer.parseInt(line[0].substring(5)); // take out "frame", indexing starts at 0
     	  
+    	  // Create fractal, then write it to a png image.
     	  new Mandelbrot(width, height, zoom, iter, horCenter, verCenter, colShift, pixelOutput);
     	  new CreateImage(width, height, pixelOutput, pixelOutput + ".png");
+    	  
+    	  // Delete now useless text file with pixel values:
     	  file = new File(pixelOutput);
     	  System.out.println("Text file " + pixelOutput + " deleted status: " + file.delete());
-    	  //System.out.println("frame set: " + String.valueOf(frame));
-    	  System.out.println("key: " + String.valueOf(frame) + " value: " + line[1]);
-    	  //context.write(new IntWritable(frame), new Text("Goodbye"));
-    	  context.write(new IntWritable(frame), new Text(line[1]));
-          //context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));          
-         
+          
+    	  context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));          
       }
    }
 
@@ -103,8 +100,6 @@ public class CombineInReduce extends Configured implements Tool {
       @Override
       public void reduce(IntWritable frame, Iterable<Text> values, Context context)
               throws IOException, InterruptedException {
-    	  
-    	  System.out.println("Entered reduce!");
     	  Text finalvalue = new Text();
     	  
           for (Text val : values) {
@@ -112,7 +107,7 @@ public class CombineInReduce extends Configured implements Tool {
                  // the same key (frame) shouldn't exist twice
                  // this loop only exists because java complained if there was no Iterable
            }
-         System.out.println("key: " + frame + "\t value: " + finalvalue);
+         System.out.println("Entered reduce with key: " + frame + "\t value: " + finalvalue);
          context.write(frame, finalvalue);
       }
    }
