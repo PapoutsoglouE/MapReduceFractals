@@ -1,7 +1,9 @@
 package combineInReduce;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -18,6 +20,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+
 import mandelbrot.Mandelbrot;
 import support.CreateImage;
 
@@ -57,6 +60,7 @@ public class CombineInReduce extends Configured implements Tool {
    public static class Map extends Mapper<LongWritable, Text, IntWritable, Text> {
       private int frame, width, height, zoom, iter, horCenter, verCenter, colShift;
       String pixelOutput;
+      private File file;
       
       @Override
       public void map(LongWritable key, Text value, Context context)
@@ -83,6 +87,8 @@ public class CombineInReduce extends Configured implements Tool {
     	  
     	  new Mandelbrot(width, height, zoom, iter, horCenter, verCenter, colShift, pixelOutput);
     	  new CreateImage(width, height, pixelOutput, pixelOutput + ".png");
+    	  file = new File(pixelOutput);
+    	  System.out.println("Text file " + pixelOutput + " deleted status: " + file.delete());
     	  //System.out.println("frame set: " + String.valueOf(frame));
     	  System.out.println("key: " + String.valueOf(frame) + " value: " + line[1]);
     	  //context.write(new IntWritable(frame), new Text("Goodbye"));
