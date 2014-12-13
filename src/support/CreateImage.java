@@ -46,5 +46,6 @@ public class CreateImage {
 		file.close();
 		File f = new File(outfile); //create path to image file
 		ImageIO.write(img, "PNG", f); //create the image file
+		System.out.println("File successfully created: " + outfile);
 	}
 }

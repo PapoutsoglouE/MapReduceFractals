@@ -84,9 +84,10 @@ public class CombineInReduce extends Configured implements Tool {
     	  new Mandelbrot(width, height, zoom, iter, horCenter, verCenter, colShift, pixelOutput);
     	  new CreateImage(width, height, pixelOutput, pixelOutput + ".png");
     	  //System.out.println("frame set: " + String.valueOf(frame));
-    	  //System.out.println("key: " + String.valueOf(frame) + " value: " + line[1]);
-    	  //context.write(new Text("hello"), new Text("Goodbye"));
-          context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));          
+    	  System.out.println("key: " + String.valueOf(frame) + " value: " + line[1]);
+    	  //context.write(new IntWritable(frame), new Text("Goodbye"));
+    	  context.write(new IntWritable(frame), new Text(line[1]));
+          //context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));          
          
       }
    }
@@ -96,6 +97,7 @@ public class CombineInReduce extends Configured implements Tool {
       public void reduce(IntWritable frame, Iterable<Text> values, Context context)
               throws IOException, InterruptedException {
     	  
+    	  System.out.println("Entered reduce!");
     	  Text finalvalue = new Text();
     	  
           for (Text val : values) {
