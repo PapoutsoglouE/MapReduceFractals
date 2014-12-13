@@ -67,6 +67,7 @@ public class CombineInReduce extends Configured implements Tool {
               throws IOException, InterruptedException {
           // input should be a single line
     	  // frameX:parameters
+    	  if (value.toString().equals("")) return;
     	  String[] line = value.toString().split(":");
     	  String[] parameters = line[1].split(",");
     	  
