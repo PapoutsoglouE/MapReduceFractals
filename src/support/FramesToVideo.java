@@ -185,7 +185,7 @@ public class FramesToVideo {
 		IStream videoStream = container.addNewStream(videoCodec);
 		videoStreamCoder = videoStream.getStreamCoder();
 		//1 frame for 10 s
-		frameRate = IRational.make(1, 1);
+		frameRate = IRational.make(15, 1);
 		videoStreamCoder.setWidth(frameDimension.width);
 		videoStreamCoder.setHeight(frameDimension.height);
 		videoStreamCoder.setFrameRate(frameRate);
