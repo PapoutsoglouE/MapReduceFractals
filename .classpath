@@ -81,5 +81,6 @@
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-client-2.4.1.jar"/>
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-common-2.4.1.jar"/>
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-server-common-2.4.1.jar"/>
+	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/missinglibs/xuggle-xuggler-5.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

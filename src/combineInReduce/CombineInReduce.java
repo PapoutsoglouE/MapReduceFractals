@@ -2,6 +2,7 @@ package combineInReduce;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.hadoop.conf.Configuration;
@@ -23,6 +24,7 @@ import org.apache.hadoop.util.ToolRunner;
 
 import mandelbrot.Mandelbrot;
 import support.CreateImage;
+import support.FramesToVideo;
 
 public class CombineInReduce extends Configured implements Tool {
    public static void main(String[] args) throws Exception {
@@ -43,6 +45,7 @@ public class CombineInReduce extends Configured implements Tool {
 
       job.setMapperClass(Map.class);
       job.setReducerClass(Reduce.class);
+      job.setNumReduceTasks(1);
 
       //job.setInputFormatClass(TextInputFormat.class);
       job.setInputFormatClass(NLineInputFormat.class);
@@ -92,7 +95,8 @@ public class CombineInReduce extends Configured implements Tool {
     	  file = new File(pixelOutput);
     	  System.out.println("Text file " + pixelOutput + " deleted status: " + file.delete());
           
-    	  context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));          
+    	  // context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));
+    	  context.write(new IntWritable(1), new Text(pixelOutput + ".png"));
       }
    }
 
@@ -101,14 +105,18 @@ public class CombineInReduce extends Configured implements Tool {
       public void reduce(IntWritable frame, Iterable<Text> values, Context context)
               throws IOException, InterruptedException {
     	  Text finalvalue = new Text();
-    	  
+    	  ArrayList<String> framelist = new ArrayList<String>();
           for (Text val : values) {
                  finalvalue = val;
+                 framelist.add(val.toString());
                  // the same key (frame) shouldn't exist twice
                  // this loop only exists because java complained if there was no Iterable
            }
-         System.out.println("Entered reduce with key: " + frame + "\t value: " + finalvalue);
-         context.write(frame, finalvalue);
+          
+          //System.out.println("Whole list: " + framelist);
+          new FramesToVideo(framelist); // only one Reduce will run, so this is called only once
+          System.out.println("Done");
+          context.write(frame, finalvalue);
       }
    }
 }
