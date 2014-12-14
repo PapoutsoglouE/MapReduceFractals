@@ -37,7 +37,7 @@ public class CombineInReduce extends Configured implements Tool {
    @Override
    public int run(String[] args) throws Exception {
       System.out.println(Arrays.toString(args));
-      Job job = new Job(getConf(), "WordCount");
+      Job job = new Job(getConf(), "CombineInReduce");
       job.setJarByClass(CombineInReduce.class);
       
       job.setOutputKeyClass(IntWritable.class);
