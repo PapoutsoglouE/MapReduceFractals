@@ -27,15 +27,19 @@ import support.CreateImage;
 import support.FramesToVideo;
 
 public class CombineInReduce extends Configured implements Tool {
+    
    public static void main(String[] args) throws Exception {
+	   long starttime, endtime;
+	   starttime = System.currentTimeMillis();
       System.out.println(Arrays.toString(args));
       int res = ToolRunner.run(new Configuration(), new CombineInReduce(), args);
-      
+      System.out.println("Total time: " + (double) (System.currentTimeMillis() - starttime) / 1000 + " seconds.");
       System.exit(res);
    }
 
 @Override
    public int run(String[] args) throws Exception {
+	  
       System.out.println(Arrays.toString(args));
       @SuppressWarnings("deprecation")
 	  Job job = new Job(getConf(), "CombineInReduce");
@@ -50,7 +54,7 @@ public class CombineInReduce extends Configured implements Tool {
 
       //job.setInputFormatClass(TextInputFormat.class);
       job.setInputFormatClass(NLineInputFormat.class);
-      NLineInputFormat.setNumLinesPerSplit(job, 1);
+      NLineInputFormat.setNumLinesPerSplit(job, 10);
       job.setOutputFormatClass(TextOutputFormat.class);
 
       FileInputFormat.addInputPath(job, new Path(args[0]));
@@ -83,7 +87,7 @@ public class CombineInReduce extends Configured implements Tool {
     	  iter = Integer.parseInt(parameters[3]);
     	  horCenter = Integer.parseInt(parameters[4]);
     	  verCenter = Integer.parseInt(parameters[5]);
-    	  colShift = 13;
+    	  colShift = 7;
     	  pixelOutput = line[0];
     	  
     	  // Isolate frame number as integer:
@@ -94,8 +98,8 @@ public class CombineInReduce extends Configured implements Tool {
     	  new CreateImage(width, height, pixelOutput, pixelOutput + ".png");
     	  
     	  // Delete now useless text file with pixel values:
-    	  file = new File(pixelOutput);
-    	  System.out.println("Text file " + pixelOutput + " deleted status: " + file.delete());
+    	  //file = new File(pixelOutput);
+    	  //System.out.println("Text file " + pixelOutput + " deleted status: " + file.delete());
           
     	  // context.write(new IntWritable(frame), new Text(pixelOutput + ".png"));
     	  context.write(new IntWritable(1), new Text(pixelOutput + ".png"));
@@ -118,6 +122,7 @@ public class CombineInReduce extends Configured implements Tool {
           //System.out.println("Whole list: " + framelist);
           new FramesToVideo(framelist); // only one Reduce will run, so this is called only once
           System.out.println("Done");
+          
           context.write(frame, finalvalue);
       }
    }

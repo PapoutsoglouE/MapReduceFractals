@@ -82,11 +82,11 @@ public class FramesToVideo {
 		close();
 		
 		// delete png files
-		File file;
+		/*File file;
 		for (i = 0; i < numberOfFrames; i++) {
 		file = new File(frames.get(i));
 		System.out.println("Image file " + frames.get(i) + " deleted status: " + file.delete());
-		}
+		}*/
 	}
 
 	/**
@@ -183,7 +183,7 @@ public class FramesToVideo {
 		ICodec videoCodec = ICodec.findEncodingCodec(ICodec.ID.CODEC_ID_H264);
 		IStream videoStream = container.addNewStream(videoCodec);
 		videoStreamCoder = videoStream.getStreamCoder();
-		frameRate = IRational.make(15, 1); // 15 fps
+		frameRate = IRational.make(24, 1); // 15 fps
 		videoStreamCoder.setWidth(frameDimension.width);
 		videoStreamCoder.setHeight(frameDimension.height);
 		videoStreamCoder.setFrameRate(frameRate);
