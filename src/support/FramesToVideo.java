@@ -2,10 +2,8 @@ package support;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import javax.imageio.ImageIO;
 import com.xuggle.xuggler.Configuration;
 import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IContainer;
@@ -47,10 +45,18 @@ public class FramesToVideo {
 	 * filename and make a video with them.
 	 * @param frames	a list with all frames to compose the final video
 	 */
-	public FramesToVideo(ArrayList<String> frames) {
+	public FramesToVideo(ArrayList<String> framesAsStrings) {
 		int i;
-		Collections.sort(frames);
-		numberOfFrames = frames.size();
+		Collections.sort(framesAsStrings);
+		numberOfFrames = framesAsStrings.size();
+		String string2;
+		ArrayList<BufferedImage> frames = new ArrayList<BufferedImage>();
+		
+		for (i = 0; i < numberOfFrames; i++) {
+			string2 = new String();
+			string2 = framesAsStrings.get(i).split(":",2)[1];
+			frames.add(CreateImage.decodeToImage(string2));
+		}
 
 		// open a container
 		container = IContainer.make();
@@ -64,17 +70,19 @@ public class FramesToVideo {
 		generatedFrameCount = 0;
 		writeFrameCount = 0;
 		packet = IPacket.make();
-
-		// take it or leave it, same thing either way
+		
+		// find more presets at https://github.com/joeyblake/FFmpeg-Presets
+		// take it or leave it, same thing either way 
 		Configuration.configure("libx264-lossless_ultrafast.ffpreset", videoStreamCoder);
 		
 		// loop through all frames and write them to stream
 		for (i = 0; i < numberOfFrames; i++) {
-			try {
-			image = ImageIO.read(new File(frames.get(i)));
-			} catch (IOException e){
-				System.out.println("Error on image read: image(" + i + ")");
-			}
+			//try {
+			//image = ImageIO.read(new File(frames.get(i)));
+				image = frames.get(i);
+			//} catch (IOException e){
+				//System.out.println("Error on image read: image(" + i + ")");
+			//}
 			image = convert(image, BufferedImage.TYPE_3BYTE_BGR);
 			writeFrame(i);
 		}
@@ -180,10 +188,10 @@ public class FramesToVideo {
 	 * Size, codec and framerate are specified here.
 	 */
 	private void initVideoStream() {
-		ICodec videoCodec = ICodec.findEncodingCodec(ICodec.ID.CODEC_ID_H264);
+		ICodec videoCodec = ICodec.findEncodingCodec(ICodec.ID.CODEC_ID_H264); // other codecs to try: lagarith, huffyuv
 		IStream videoStream = container.addNewStream(videoCodec);
 		videoStreamCoder = videoStream.getStreamCoder();
-		frameRate = IRational.make(24, 1); // 15 fps
+		frameRate = IRational.make(15, 1); // 15 fps
 		videoStreamCoder.setWidth(frameDimension.width);
 		videoStreamCoder.setHeight(frameDimension.height);
 		videoStreamCoder.setFrameRate(frameRate);

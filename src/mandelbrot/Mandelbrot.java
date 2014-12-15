@@ -1,9 +1,6 @@
 package mandelbrot;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import support.MyComplex;
 
 
@@ -24,18 +21,23 @@ public class Mandelbrot {
 	 * @param colorShift adjusts color range for fractal
 	 * @throws IOException for pixel file creation
 	 */
-	public Mandelbrot(int width, int height, double zoomIn, int max_iter, int horCenter, int verCenter, int colorShift, String output) throws IOException {
+	private int[] pixels;
+	
+	public Mandelbrot(int width, int height) {
+		pixels = new int[width * height];
+	}
+	
+	public Mandelbrot Mandelbrot2(int width, int height, double zoomIn, int max_iter, int horCenter, int verCenter, int colorShift, String output) throws IOException {
 		/* 
 		  default values: width = 800, height = 600, zoomIn = 150, max_iter = 570
 						   horCenter = 400, verCenter = 300
 		 */
 		
 		// Calculated pixel values will be written to out.txt.
-		File pixel_values = new File(output); //Create path to output file.
-		FileOutputStream fos = new FileOutputStream(pixel_values); //Create FileOutputStream object in order to enable writing to the file.
-		OutputStreamWriter osw = new OutputStreamWriter(fos); //Create OutputStreamWriter object which will conduct the writing to the file.
+		//File pixel_values = new File(output); //Create path to output file.
+		//FileOutputStream fos = new FileOutputStream(pixel_values); //Create FileOutputStream object in order to enable writing to the file.
+		//OutputStreamWriter osw = new OutputStreamWriter(fos); //Create OutputStreamWriter object which will conduct the writing to the file.
 		double tmp; //Temporary variable used for storing the real part of Znew
-
 		for (int y = 0; y < height; y++) {  
 			for (int x = 0; x < width; x++) { //For every pixel in the image iterate.
 				MyComplex z = new MyComplex();
@@ -50,10 +52,13 @@ public class Mandelbrot {
 					z.setReal(tmp);
 					iter--;	
 				}
-				osw.write((iter | (iter << colorShift))  + "\n"); // write pixel value to file
+				
+				pixels[y * width + x] = (iter | (iter << colorShift));
+				//osw.write((iter | (iter << colorShift))  + "\n"); // write pixel value to file
 			}
 		}
-		osw.close();
+		//osw.close();
+		return this;
 	}
 
 	/**
@@ -75,5 +80,12 @@ public class Mandelbrot {
 		new CreateImage(width, height, "out.txt", "output.png");
 	}
 	*/
+	
+	/**
+	 * @return array[width * height] with pixel values of Mandelbrot fractal
+	 */
+	public int[] getMandelbrot() {
+		return this.pixels;
+	}
 
 }
