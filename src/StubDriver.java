@@ -15,7 +15,8 @@ public class StubDriver {
     /*
      * Instantiate a Job object for your job's configuration. 
      */
-    Job job = new Job();
+    @SuppressWarnings("deprecation")
+	Job job = new Job();
     
     /*
      * Specify the jar file that contains your driver, mapper, and reducer.

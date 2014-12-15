@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import support.MyComplex;
-import support.CreateImage;
 
 
 // Based on code found at http://rosettacode.org/wiki/Mandelbrot_set#Java

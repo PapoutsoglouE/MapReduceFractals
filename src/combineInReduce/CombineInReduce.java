@@ -15,7 +15,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+//import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -34,10 +34,11 @@ public class CombineInReduce extends Configured implements Tool {
       System.exit(res);
    }
 
-   @Override
+@Override
    public int run(String[] args) throws Exception {
       System.out.println(Arrays.toString(args));
-      Job job = new Job(getConf(), "CombineInReduce");
+      @SuppressWarnings("deprecation")
+	  Job job = new Job(getConf(), "CombineInReduce");
       job.setJarByClass(CombineInReduce.class);
       
       job.setOutputKeyClass(IntWritable.class);
@@ -61,7 +62,8 @@ public class CombineInReduce extends Configured implements Tool {
    }
    
    public static class Map extends Mapper<LongWritable, Text, IntWritable, Text> {
-      private int frame, width, height, zoom, iter, horCenter, verCenter, colShift;
+      private int width, height, zoom, iter, horCenter, verCenter, colShift;
+      //private int frame;
       String pixelOutput;
       private File file;
       
@@ -85,7 +87,7 @@ public class CombineInReduce extends Configured implements Tool {
     	  pixelOutput = line[0];
     	  
     	  // Isolate frame number as integer:
-    	  frame = Integer.parseInt(line[0].substring(5)); // take out "frame", indexing starts at 0
+    	  //frame = Integer.parseInt(line[0].substring(5)); // take out "frame", indexing starts at 0
     	  
     	  // Create fractal, then write it to a png image.
     	  new Mandelbrot(width, height, zoom, iter, horCenter, verCenter, colShift, pixelOutput);

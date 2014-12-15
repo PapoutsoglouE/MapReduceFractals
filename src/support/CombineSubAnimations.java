@@ -22,20 +22,21 @@ import com.xuggle.xuggler.video.IConverter;
 // http://xuggle.googlecode.com/svn/trunk/repo/share/java/xuggle/xuggle-xuggler/5.4/xuggle-xuggler-5.4.jar
 // documentation at: http://www.xuggle.com/public/documentation/java/api/
 
-// code based on
-// https://github.com/niavok/ps2yt/blob/master/src/com/niavok/VideoEncoder.java
-
 /**
- * This class contains methods for frame-to-video conversions.
+ * This class contains methods for combining numerous short <br>
+ * videos into a longer one.
  */
-public class FramesToVideo {
-	private static final String outputFilename = "test.mp4";
+
+// TODO: everything here
+// this is a placeholder class copied from FramesToVideo
+public class CombineSubAnimations {
+	private static final String outputFilename = "test_combine.mp4";
 	private static Dimension frameDimension = new Dimension(800,600);
 	private IPacket packet;
 	private IRational frameRate;
 	private IContainer container;
 	private IStreamCoder videoStreamCoder;
-	private int numberOfFrames;
+	private int numberOfVideoparts;
 	private int writeFrameCount;
 	private int generatedFrameCount;
 	private long positionInMicroseconds;
@@ -43,14 +44,14 @@ public class FramesToVideo {
 
 
 	/**
-	 * Take an ArrayList of frame filenames, then sort the files by <br>
+	 * Take an ArrayList of sub-animation filenames, then sort the files by <br>
 	 * filename and make a video with them.
-	 * @param frames	a list with all frames to compose the final video
+	 * @param frames	a list with all short videos to compose the final video
 	 */
-	public FramesToVideo(ArrayList<String> frames) {
+	public CombineSubAnimations(ArrayList<String> videoparts) {
 		int i;
-		Collections.sort(frames);
-		numberOfFrames = frames.size();
+		Collections.sort(videoparts);
+		numberOfVideoparts = videoparts.size();
 
 		// open a container
 		container = IContainer.make();
@@ -69,9 +70,9 @@ public class FramesToVideo {
 		Configuration.configure("libx264-lossless_ultrafast.ffpreset", videoStreamCoder);
 		
 		// loop through all frames and write them to stream
-		for (i = 0; i < numberOfFrames; i++) {
+		for (i = 0; i < numberOfVideoparts; i++) {
 			try {
-			image = ImageIO.read(new File(frames.get(i)));
+			image = ImageIO.read(new File(videoparts.get(i)));
 			} catch (IOException e){
 				System.out.println("Error on image read: image(" + i + ")");
 			}
@@ -83,9 +84,9 @@ public class FramesToVideo {
 		
 		// delete png files
 		File file;
-		for (i = 0; i < numberOfFrames; i++) {
-		file = new File(frames.get(i));
-		System.out.println("Image file " + frames.get(i) + " deleted status: " + file.delete());
+		for (i = 0; i < numberOfVideoparts; i++) {
+		file = new File(videoparts.get(i));
+		System.out.println("Image file " + videoparts.get(i) + " deleted status: " + file.delete());
 		}
 	}
 
@@ -190,7 +191,7 @@ public class FramesToVideo {
 		videoStreamCoder.setTimeBase(IRational.make(frameRate.getDenominator(),
 				frameRate.getNumerator()));
 		//videoStreamCoder.setBitRate(3500000);
-		videoStreamCoder.setNumPicturesInGroupOfPictures(numberOfFrames);
+		videoStreamCoder.setNumPicturesInGroupOfPictures(numberOfVideoparts);
 		videoStreamCoder.setPixelType(IPixelFormat.Type.YUV420P);
 		videoStreamCoder.setFlag(IStreamCoder.Flags.FLAG_QSCALE, true);
 		videoStreamCoder.setGlobalQuality(0);

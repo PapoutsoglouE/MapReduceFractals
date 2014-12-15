@@ -5,8 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
-
 import javax.imageio.ImageIO;
+//import javax.imageio.stream.ImageOutputStream;
 
 // metadata http://stackoverflow.com/questions/6495518/writing-image-metadata-in-java-preferably-png
 // https://code.google.com/p/pngj/
@@ -30,6 +30,7 @@ public class CreateImage {
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB); //define image type and size
 		FileReader file = new FileReader(infile); //open file with data for reading
 		Scanner input = new Scanner(file); //create scanner object to read the file
+		//ImageOutputStream outstream;
 
 		for (y=0; y<height; y++){
 			for (x=0; x<width; x++){
