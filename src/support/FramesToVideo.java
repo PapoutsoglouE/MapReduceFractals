@@ -27,7 +27,7 @@ import com.xuggle.xuggler.video.IConverter;
  * This class contains methods for frame-to-video conversions.
  */
 public class FramesToVideo {
-	private static final String outputFilename = "test.mp4";
+	private String outputFilename;
 	private static Dimension frameDimension = new Dimension(800,600);
 	private IPacket packet;
 	private IRational frameRate;
@@ -45,9 +45,10 @@ public class FramesToVideo {
 	 * filename and make a video with them.
 	 * @param frames	a list with all frames to compose the final video
 	 */
-	public FramesToVideo(ArrayList<String> framesAsStrings) {
+	public FramesToVideo(ArrayList<String> framesAsStrings, String videoTitle) {
 		int i;
-		Collections.sort(framesAsStrings);
+		outputFilename = new String(videoTitle + ".mp4");
+		//Collections.sort(framesAsStrings);
 		numberOfFrames = framesAsStrings.size();
 		String string2;
 		ArrayList<BufferedImage> frames = new ArrayList<BufferedImage>();

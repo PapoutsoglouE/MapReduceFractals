@@ -3,9 +3,14 @@ package support;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.imageio.ImageIO;
+
 import com.xuggle.xuggler.Configuration;
 import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IContainer;
@@ -17,11 +22,26 @@ import com.xuggle.xuggler.IStreamCoder;
 import com.xuggle.xuggler.IVideoPicture;
 import com.xuggle.xuggler.video.ConverterFactory;
 import com.xuggle.xuggler.video.IConverter;
+import com.coremedia.iso.IsoFile;
+import com.googlecode.mp4parser.authoring.Movie;
+import com.googlecode.mp4parser.authoring.Track;
+import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
+import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
+import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+
+
 
 // Download Xuggle from: 
 // http://xuggle.googlecode.com/svn/trunk/repo/share/java/xuggle/xuggle-xuggler/5.4/xuggle-xuggler-5.4.jar
 // documentation at: http://www.xuggle.com/public/documentation/java/api/
 
+// Download mp4parser / isoparser from:
+// https://github.com/sannies/mp4parser/releases/download/mp4parser-project-1.0.5/isoparser-1.0.5.jar
+
+// see https://code.google.com/p/mp4parser/wiki/AppendTracks for code
 /**
  * This class contains methods for combining numerous short <br>
  * videos into a longer one.
@@ -30,17 +50,7 @@ import com.xuggle.xuggler.video.IConverter;
 // TODO: everything here
 // this is a placeholder class copied from FramesToVideo
 public class CombineSubAnimations {
-	private static final String outputFilename = "test_combine.mp4";
-	private static Dimension frameDimension = new Dimension(800,600);
-	private IPacket packet;
-	private IRational frameRate;
-	private IContainer container;
-	private IStreamCoder videoStreamCoder;
-	private int numberOfVideoparts;
-	private int writeFrameCount;
-	private int generatedFrameCount;
-	private long positionInMicroseconds;
-	private BufferedImage image;
+// look at https://code.google.com/p/mp4parser/source/browse/trunk/examples/src/main/java/com/googlecode/mp4parser/stuff/DavidAppend.java?r=719
 
 
 	/**
@@ -49,153 +59,31 @@ public class CombineSubAnimations {
 	 * @param frames	a list with all short videos to compose the final video
 	 */
 	public CombineSubAnimations(ArrayList<String> videoparts) {
-		int i;
-		Collections.sort(videoparts);
-		numberOfVideoparts = videoparts.size();
+		MovieCreator mc = new MovieCreator();
+		Movie video = new Movie(); 
+		//video = mc.build(Channels.newChannel(getResourceAsStream("/count-video.mp4")));
+		Movie audio = new Movie();
+		//audio = mc.build(Channels.newChannel(getResourceAsStream("/count-english-audio.mp4")));
 
-		// open a container
-		container = IContainer.make();
-		container.open(outputFilename, IContainer.Type.WRITE, null);
-		initVideoStream();
 
-		// write the header
-		container.writeHeader();
-		positionInMicroseconds = 0;
+		List<Track> videoTracks = video.getTracks();
+		video.setTracks(new LinkedList<Track>());
 
-		generatedFrameCount = 0;
-		writeFrameCount = 0;
-		packet = IPacket.make();
+		List<Track> audioTracks = audio.getTracks();
 
-		// take it or leave it, same thing either way
-		Configuration.configure("libx264-lossless_ultrafast.ffpreset", videoStreamCoder);
-		
-		// loop through all frames and write them to stream
-		for (i = 0; i < numberOfVideoparts; i++) {
-			try {
-			image = ImageIO.read(new File(videoparts.get(i)));
-			} catch (IOException e){
-				System.out.println("Error on image read: image(" + i + ")");
+		try {
+			for (Track videoTrack : videoTracks) {
+				video.addTrack(new AppendTrack(videoTrack, videoTrack));
 			}
-			image = convert(image, BufferedImage.TYPE_3BYTE_BGR);
-			writeFrame(i);
-		}
-
-		close();
-		
-		// delete png files
-		File file;
-		for (i = 0; i < numberOfVideoparts; i++) {
-		file = new File(videoparts.get(i));
-		System.out.println("Image file " + videoparts.get(i) + " deleted status: " + file.delete());
-		}
-	}
-
-	/**
-	 * Write a frame to the video stream.
-	 * @param frameId number of frame being added, for logging purposes only
-	 */
-	private void writeFrame(int frameId) {
-		System.out.println("writeFrame " + frameId);
-		BufferedImage outputImage = image;
-		IConverter converter = ConverterFactory.createConverter(outputImage,
-				videoStreamCoder.getPixelType());
-		IVideoPicture frame = converter.toPicture(outputImage, positionInMicroseconds);
-		frame.setQuality(0); // max quality: lossless
-		if (videoStreamCoder.encodeVideo(packet, frame, 0) < 0) {
-			throw new RuntimeException("Unable to encode video.");
-		}
-		if (packet.isComplete()) {
-			System.out.println("write video packet");
-			if (container.writePacket(packet,true) < 0) {
-				writeFrameCount++;
-				throw new RuntimeException("Could not write packet to container.");
+			for (Track audioTrack : audioTracks) {
+				//video.addTrack(new AppendTrack(audioTrack, audioTrack));
 			}
-		}
-		positionInMicroseconds += (1/frameRate.getDouble() * Math.pow(1000, 2));
-		generatedFrameCount++;
-	}
-	
-	/**
-	 * Convert a BufferedImage to the right colorspace.
-	 * @param value the image
-	 * @param type the color type to convert to
-	 * @return a bufferedimage with the desired colorspace
-	 */
-	private static BufferedImage convert(BufferedImage value, int type) {
-		if (value.getType() == type)
-			return value;
-		BufferedImage result = new BufferedImage(value.getWidth(), value.getHeight(),
-				type);
-		result.getGraphics().drawImage(value, 0, 0, null);
-		return result;
-	}
+		} catch (IOException e){}
 
-	/**
-	 * Close video stream and container.
-	 */
-	public void close(){
-		System.out.println("Closing stream.");
-		System.out.println("generatedFrameCount = " + generatedFrameCount);
-		System.out.println("writeFrameCount = " + writeFrameCount);
-		while(writeFrameCount < generatedFrameCount) {
-			int encodeVideoResult = videoStreamCoder.encodeVideo(packet, null, 0);
-			// System.out.println("encodeVideoResult="+ encodeVideoResult);
-			if (encodeVideoResult >= 0) {
-				if (packet.isComplete()) {
-					writeFrameCount++;
-					// System.out.println("write flush packet "+ writeFrameCount);
-					if (container.writePacket(packet, true) < 0) {
-						throw new RuntimeException("Could not write packet to container.");
-					}
-				} else {
-					break;
-				}
-			} else {
-				break;
-			}
-		}
-		/*while(true) { // is this only for audio?
-			int encodeVideoResult = audioStreamCoder.encodeVideo(packet, null, 0);
-			// System.out.println("encodeVideoResult="+ encodeVideoResult);
-			if (encodeVideoResult >= 0) {
-				if (packet.isComplete()) {
-					writeFrameCount++;
-					// System.out.println("write flush packet "+ writeFrameCount);
-					if (container.writePacket(packet,true) < 0) {
-						throw new RuntimeException("Could not write packet to container.");
-					}
-				} else {
-					break;
-				}
-			} else {
-				break;
-			}
-		}*/
-		container.writeTrailer();
-		container.close();
-	}
-
-
-	/**
-	 * Initialise the video stream and all of its parameters.
-	 * Size, codec and framerate are specified here.
-	 */
-	private void initVideoStream() {
-		ICodec videoCodec = ICodec.findEncodingCodec(ICodec.ID.CODEC_ID_H264);
-		IStream videoStream = container.addNewStream(videoCodec);
-		videoStreamCoder = videoStream.getStreamCoder();
-		frameRate = IRational.make(15, 1); // 15 fps
-		videoStreamCoder.setWidth(frameDimension.width);
-		videoStreamCoder.setHeight(frameDimension.height);
-		videoStreamCoder.setFrameRate(frameRate);
-		videoStreamCoder.setTimeBase(IRational.make(frameRate.getDenominator(),
-				frameRate.getNumerator()));
-		//videoStreamCoder.setBitRate(3500000);
-		videoStreamCoder.setNumPicturesInGroupOfPictures(numberOfVideoparts);
-		videoStreamCoder.setPixelType(IPixelFormat.Type.YUV420P);
-		videoStreamCoder.setFlag(IStreamCoder.Flags.FLAG_QSCALE, true);
-		videoStreamCoder.setGlobalQuality(0);
-		videoStreamCoder.open(null, null);
+		//IsoFile out = new DefaultMp4Builder().build(video);
+		//FileOutputStream fos = new FileOutputStream(new File(String.format("output.mp4")));
+		//out.getBox(fos.getChannel());
+		//fos.close();
 	}
 
 }
