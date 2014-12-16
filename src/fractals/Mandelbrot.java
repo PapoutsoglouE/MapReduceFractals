@@ -1,4 +1,4 @@
-package mandelbrot;
+package fractals;
 
 import java.io.IOException;
 import support.MyComplex;

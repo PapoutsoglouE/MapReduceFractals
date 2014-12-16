@@ -1,4 +1,4 @@
-package combineInReduce;
+package mapreduce;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -23,19 +23,20 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import mandelbrot.Mandelbrot;
+import fractals.Mandelbrot;
 import support.CreateImage;
 import support.FramesToVideo;
 
-public class CombineInReduce extends Configured implements Tool {
+public class UseCombiners extends Configured implements Tool {
 
 	public static void main(String[] args) throws Exception {
 		long startTime, endTime; // for measuring execution time
 		startTime = System.currentTimeMillis();
 		System.out.println(Arrays.toString(args));
-		int res = ToolRunner.run(new Configuration(), new CombineInReduce(), args);
+		int res = ToolRunner.run(new Configuration(), new UseCombiners(), args);
 		endTime = System.currentTimeMillis();
-		System.out.println("Total time: " + (double) (endTime - startTime) / 1000 + " seconds.");
+		System.out.println("Total time: " + (double) (endTime - startTime)
+				/ 1000 + " seconds.");
 		System.exit(res);
 	}
 
@@ -45,16 +46,17 @@ public class CombineInReduce extends Configured implements Tool {
 		System.out.println(Arrays.toString(args));
 		@SuppressWarnings("deprecation")
 		Job job = new Job(getConf(), "CombineInReduce");
-		job.setJarByClass(CombineInReduce.class);
+		job.setJarByClass(UseCombiners.class);
 
 		job.setOutputKeyClass(IntWritable.class);
 		job.setOutputValueClass(Text.class);
 
 		job.setMapperClass(Map.class);
 		job.setReducerClass(Reduce.class);
+		job.setCombinerClass(MyCombiner.class);
 		job.setNumReduceTasks(1);
 
-		//job.setInputFormatClass(TextInputFormat.class);
+		// job.setInputFormatClass(TextInputFormat.class);
 		job.setInputFormatClass(NLineInputFormat.class);
 		NLineInputFormat.setNumLinesPerSplit(job, 5);
 		job.setOutputFormatClass(TextOutputFormat.class);
@@ -67,9 +69,10 @@ public class CombineInReduce extends Configured implements Tool {
 		return 0;
 	}
 
-	public static class Map extends Mapper<LongWritable, Text, IntWritable, Text> {
+	public static class Map extends
+			Mapper<LongWritable, Text, IntWritable, Text> {
 		private int width, height, zoom, iter, horCenter, verCenter, colShift;
-		//private int frame;
+		// private int frame;
 		String pixelOutput;
 
 		@Override
@@ -77,9 +80,11 @@ public class CombineInReduce extends Configured implements Tool {
 				throws IOException, InterruptedException {
 			// input should be a single line
 			// frameX:parameters
-			if (value.toString().equals("")) return;
+			if (value.toString().equals(""))
+				return;
 			String[] line = value.toString().split(":");
-			if (line[0].equals("")) return; // input lines can be commented out with a  :
+			if (line[0].equals(""))
+				return; // input lines can be commented out with a :
 			String[] parameters = line[1].split(",");
 
 			// Mandelbrot parameters
@@ -95,38 +100,76 @@ public class CombineInReduce extends Configured implements Tool {
 			CreateImage image;
 			BufferedImage newframe = null;
 			String newframeb64 = new String();
-			
-			// Isolate frame number as integer:
-			//frame = Integer.parseInt(line[0].substring(5)); // take out "frame", indexing starts at 0
 
-			pixels.Mandelbrot2(width, height, zoom, iter, horCenter, verCenter, colShift, pixelOutput);
-			image = new CreateImage(width, height, pixels.getMandelbrot(), pixelOutput + ".png");
+			// Isolate frame number as integer:
+			// frame = Integer.parseInt(line[0].substring(5)); // take out
+			// "frame", indexing starts at 0
+
+			pixels.Mandelbrot2(width, height, zoom, iter, horCenter, verCenter,
+					colShift, pixelOutput);
+			image = new CreateImage(width, height, pixels.getMandelbrot(),
+					pixelOutput + ".png");
 			newframe = image.getBufferedImage();
 			newframeb64 = CreateImage.encodeToString(newframe, "png");
 
-			context.write(new IntWritable(1), new Text(pixelOutput + ":" + newframeb64));
+			context.write(new IntWritable(1), new Text(pixelOutput + ":"
+					+ newframeb64));
 		}
 	}
 
-	public static class Reduce extends Reducer<IntWritable, Text, IntWritable, Text> {
+	// based on
+	// http://developersideas.blogspot.gr/2013/08/hadoop-mapreduce-combiner-classes.html
+	public final class MyCombiner extends Reducer<IntWritable, Text, IntWritable, Text> {
 		@Override
-		public void reduce(IntWritable frame, Iterable<Text> values, Context context)
-				throws IOException, InterruptedException {
+		public void reduce(final IntWritable key, final Iterable<Text> values,
+				final Context context) throws IOException, InterruptedException {
+			Text finalvalue = new Text();
+			ArrayList<String> framelist = new ArrayList<String>();
+			String videoTitle = new String();
+			for (Text val : values) {
+				finalvalue = val;
+				framelist.add(val.toString());
+				// the same key (frame) shouldn't exist twice
+				// this loop only exists because java complained if there was no
+				// Iterable
+			}
+			
+			Collections.sort(framelist); // framelist format: frameXXXX:[base64string]
+			
+			videoTitle = framelist.get(0).split(":",2)[0]; // title of this video part
+			
+			// System.out.println("Whole list: " + framelist);
+			new FramesToVideo(framelist, videoTitle); // only one Reduce will run, so this
+											// is called only once
+			System.out.println("Done");
+
+			context.write(new IntWritable(1), new Text(videoTitle + ".mp4"));
+		}
+	}
+
+	public static class Reduce extends
+			Reducer<IntWritable, Text, IntWritable, Text> {
+		@Override
+		public void reduce(IntWritable frame, Iterable<Text> values,
+				Context context) throws IOException, InterruptedException {
 			Text finalvalue = new Text();
 			ArrayList<String> framelist = new ArrayList<String>();
 			for (Text val : values) {
 				finalvalue = val;
 				framelist.add(val.toString());
 				// the same key (frame) shouldn't exist twice
-				// this loop only exists because java complained if there was no Iterable
+				// this loop only exists because java complained if there was no
+				// Iterable
 			}
 
-			//System.out.println("Whole list: " + framelist);
+			// System.out.println("Whole list: " + framelist);
 			Collections.sort(framelist);
-			new FramesToVideo(framelist, "testvideo"); // only one Reduce will run, so this is called only once
+			new FramesToVideo(framelist, "finalvideo"); // only one Reduce will run, so this
+											// is called only once
 			System.out.println("Done");
 
 			context.write(frame, finalvalue);
 		}
 	}
+
 }
