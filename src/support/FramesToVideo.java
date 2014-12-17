@@ -2,8 +2,8 @@ package support;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import com.xuggle.xuggler.Configuration;
 import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IContainer;
@@ -61,6 +61,7 @@ public class FramesToVideo {
 
 		// open a container
 		container = IContainer.make();
+		
 		container.open(outputFilename, IContainer.Type.WRITE, null);
 		initVideoStream();
 
@@ -89,6 +90,17 @@ public class FramesToVideo {
 		}
 
 		close();
+		
+		File f = new File(outputFilename);
+		System.out.println("Video file exists: " + f.exists());
+		System.out.println("Absolute video file path: " + f.getAbsolutePath());
+		
+		OperationsHDFS copy = new OperationsHDFS();
+		if (copy.FromLocalToHDFS(f.getAbsolutePath(), "testvideo.mp4")) {
+			System.out.println("Copy successful!");
+		} else {
+			System.out.println("Copy failed.");
+		}
 		
 		// delete png files
 		/*File file;

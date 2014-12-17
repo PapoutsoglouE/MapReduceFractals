@@ -80,12 +80,9 @@
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-client-2.4.1.jar"/>
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-common-2.4.1.jar"/>
 	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/yarn/hadoop-yarn-server-common-2.4.1.jar"/>
-	<classpathentry kind="lib" path="/usr/local/hadoop/share/hadoop/missinglibs/xuggle-xuggler-5.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/WordCount"/>
-	<classpathentry kind="lib" path="/home/master/git/MapReduceFractals/libs/isoparser-1.0.5.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="MapReduceFractals/libs"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="/home/master/git/MapReduceFractals/libs/aspectjrt-1.7.3.jar"/>
+	<classpathentry kind="lib" path="/home/master/git/MapReduceFractals/libs/isoparser-1.0-beta-6.jar"/>
+	<classpathentry kind="lib" path="/home/master/git/MapReduceFractals/libs/xuggle-xuggler-5.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

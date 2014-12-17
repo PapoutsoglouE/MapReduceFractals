@@ -1,36 +1,35 @@
 package support;
 
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.nio.channels.Channels;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
-import com.xuggle.xuggler.Configuration;
-import com.xuggle.xuggler.ICodec;
-import com.xuggle.xuggler.IContainer;
-import com.xuggle.xuggler.IPacket;
-import com.xuggle.xuggler.IPixelFormat;
-import com.xuggle.xuggler.IRational;
-import com.xuggle.xuggler.IStream;
-import com.xuggle.xuggler.IStreamCoder;
-import com.xuggle.xuggler.IVideoPicture;
-import com.xuggle.xuggler.video.ConverterFactory;
-import com.xuggle.xuggler.video.IConverter;
+import com.googlecode.mp4parser.authoring.Movie;
+import com.googlecode.mp4parser.authoring.Track;
+import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.coremedia.iso.IsoBufferWrapperImpl;
 import com.coremedia.iso.IsoFile;
+import com.coremedia.iso.IsoOutputStream;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.util.LinkedList;
+import java.util.List;
 
 
 
@@ -50,7 +49,7 @@ import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 // TODO: everything here
 // this is a placeholder class copied from FramesToVideo
 public class CombineSubAnimations {
-// look at https://code.google.com/p/mp4parser/source/browse/trunk/examples/src/main/java/com/googlecode/mp4parser/stuff/DavidAppend.java?r=719
+	// look at https://code.google.com/p/mp4parser/source/browse/trunk/examples/src/main/java/com/googlecode/mp4parser/stuff/DavidAppend.java?r=719
 
 
 	/**
@@ -58,32 +57,47 @@ public class CombineSubAnimations {
 	 * filename and make a video with them.
 	 * @param frames	a list with all short videos to compose the final video
 	 */
-	public CombineSubAnimations(ArrayList<String> videoparts) {
-		MovieCreator mc = new MovieCreator();
-		Movie video = new Movie(); 
-		//video = mc.build(Channels.newChannel(getResourceAsStream("/count-video.mp4")));
-		Movie audio = new Movie();
-		//audio = mc.build(Channels.newChannel(getResourceAsStream("/count-english-audio.mp4")));
+	public CombineSubAnimations(ArrayList<String> videoparts) throws IOException {
+		Movie video = null;
+		Movie audio = null;
 
+		video = new MovieCreator().build(new IsoBufferWrapperImpl(readFully(CombineSubAnimations.class.getResourceAsStream("/count-video.mp4"))));
 
 		List<Track> videoTracks = video.getTracks();
 		video.setTracks(new LinkedList<Track>());
 
-		List<Track> audioTracks = audio.getTracks();
+		for (Track videoTrack : videoTracks) {
+			video.addTrack(new AppendTrack(videoTrack, videoTrack));
+		}
+
+		IsoFile out = null;
+		FileOutputStream fos = null;
+
+		out = (IsoFile) new DefaultMp4Builder().build(video);
 
 		try {
-			for (Track videoTrack : videoTracks) {
-				video.addTrack(new AppendTrack(videoTrack, videoTrack));
-			}
-			for (Track audioTrack : audioTracks) {
-				//video.addTrack(new AppendTrack(audioTrack, audioTrack));
-			}
-		} catch (IOException e){}
+			fos = new FileOutputStream(new File(String.format("output.mp4")));
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found in CombineSubAnimations");
+		}
 
-		//IsoFile out = new DefaultMp4Builder().build(video);
-		//FileOutputStream fos = new FileOutputStream(new File(String.format("output.mp4")));
-		//out.getBox(fos.getChannel());
-		//fos.close();
+		BufferedOutputStream bos = new BufferedOutputStream(fos);
+
+		out.getBox(new IsoOutputStream(fos));
+		fos.close();
+
+
+	}
+
+
+	static byte[] readFully(InputStream is) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buffer = new byte[2048];
+		int n = 0;
+		while (-1 != (n = is.read(buffer))) {
+			baos.write(buffer, 0, n);
+		}
+		return baos.toByteArray();
 	}
 
 }
